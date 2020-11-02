@@ -1,8 +1,8 @@
 #!/bin/sh
-# lz_asuswrt_status.sh v1.1.1
+# lz_asuswrt_status.sh v1.1.2
 # By LZ 妙妙呜 (larsonzhang@gmail.com)
 
-LZ_VERSION=v1.1.1
+LZ_VERSION=v1.1.2
 
 ## 路由器WIFI无线网络操作wl指令名称
 WL=wl
@@ -226,12 +226,17 @@ echo
 free 2> /dev/null
 
 echo
-NAND_bad_block=$( dmesg 2> /dev/null | grep nand_read_bbt | grep "bad block" )
+NAND_bad_block=$( cat /sys/class/mtd/mtd6/bad_blocks 2> /dev/null | grep -o '[0-9]*' | sed -n 1p )
 if [ -n "$NAND_bad_block" ]; then
-	echo "$NAND_bad_block"
-	echo Number of NAND bad blocks: "$( echo "$NAND_bad_block" | grep -c '^.*$' )"
+	echo Number of NAND bad blocks: "$NAND_bad_block"
 else
-	echo No bad blocks found in NAND.
+	NAND_bad_block=$( dmesg 2> /dev/null | grep nand_read_bbt | grep "bad block" )
+	if [ -n "$NAND_bad_block" ]; then
+		echo "$NAND_bad_block"
+		echo Number of NAND bad blocks: "$( echo "$NAND_bad_block" | grep -c '.' )"
+	else
+		echo No bad blocks found in NAND.
+	fi
 fi
 
 echo
@@ -249,22 +254,22 @@ if [ -n "$( which bcmmcastctl 2> /dev/null )" ]; then
 	echo
 	bcmmcastctl show 2> /dev/null
 else
-	if [ -n "$( ps 2> /dev/null | grep igmpproxy | grep -v grep | sed -n 1p )" ]; then
+	if [ -n "$( ps 2> /dev/null | grep igmpproxy | grep -v grep )" ]; then
 		echo
-		ps 2> /dev/null | grep igmpproxy | grep -v grep
+		ps 2> /dev/null | grep igmpproxy | grep -v grep | sed 's/^[ ]*//g'
 		cat "$( ps 2> /dev/null | grep igmpproxy | grep -v grep | sed -n 1p | awk '{print $6}' )" 2> /dev/null
 	fi
 fi
 
-if [ -n "$( ps 2> /dev/null | grep udpxy | grep -v grep | sed -n 1p )" ]; then
+if [ -n "$( ps 2> /dev/null | grep udpxy | grep -v grep )" ]; then
 	echo
-	ps 2> /dev/null | grep udpxy | grep -v grep
+	ps 2> /dev/null | grep udpxy | grep -v grep | sed 's/^[ ]*//g'
 fi
 
 echo
 ip route show 2> /dev/null
 
-if [ -n "$( ip route show 2> /dev/null | grep nexthop | sed -n 1p )" ]; then
+if [ -n "$( ip route show 2> /dev/null | grep nexthop )" ]; then
 	echo
 	ip route show table 100 2> /dev/null
 	echo
