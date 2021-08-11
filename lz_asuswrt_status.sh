@@ -287,4 +287,3 @@ echo LZ $LZ_VERSION script commands executed!
 echo
 echo $(date) [$$]
 echo
-echo
