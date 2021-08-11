@@ -1,8 +1,8 @@
 #!/bin/sh
-# lz_asuswrt_status.sh v1.1.2
+# lz_asuswrt_status.sh v1.1.3
 # By LZ 妙妙呜 (larsonzhang@gmail.com)
 
-LZ_VERSION=v1.1.2
+LZ_VERSION=v1.1.3
 
 ## 路由器WIFI无线网络操作wl指令名称
 WL=wl
@@ -46,15 +46,21 @@ else
 	[ -n "$firmware_version" ] && {
 		firmware_buildno=$( nvram get buildno 2> /dev/null | sed -n 1p )
 		[ -n "$firmware_buildno" ] && {
-			firmware_webs_state_info=$( nvram get webs_state_info 2> /dev/null | sed 's/^[^_]*[_]/&LZZL/' | sed 's/[_]LZZL/\./' | sed -n 1p )
+			firmware_webs_state_info=$( nvram get webs_state_info 2> /dev/null | sed 's/\(^[0-9]*\)[^0-9]*\([0-9].*$\)/\1\.\2/g' | sed 's/\(^[0-9]*[\.][0-9]*\)[^0-9]*\([0-9].*$\)/\1\.\2/g' | sed -n 1p )
 			if [ -z "$firmware_webs_state_info" ]; then
-				firmware_webs_state_info_beta=$( nvram get webs_state_info_beta 2> /dev/null | sed 's/^[^_]*[_]/&LZZL/' | sed 's/[_]LZZL/\./' | sed -n 1p )
+				firmware_webs_state_info_beta=$( nvram get webs_state_info_beta 2> /dev/null | sed 's/\(^[0-9]*\)[^0-9]*\([0-9].*$\)/\1\.\2/g' | sed 's/\(^[0-9]*[\.][0-9]*\)[^0-9]*\([0-9].*$\)/\1\.\2/g' | sed -n 1p )
 				if [ -z "$firmware_webs_state_info_beta" ]; then
 					firmware_version="$firmware_version.$firmware_buildno"
 				else
+					if [ "$( echo $firmware_version | sed 's/[^0-9]//g' )" = "$( echo $firmware_webs_state_info_beta | sed 's/\(^[0-9]*\).*$/\1/g' )" ]; then
+						firmware_webs_state_info_beta=$( echo $firmware_webs_state_info_beta | sed 's/^[0-9]*[^0-9]*\([0-9].*$\)/\1/g' )
+					fi
 					firmware_version="$firmware_version.$firmware_webs_state_info_beta"
 				fi
 			else
+				if [ "$( echo $firmware_version | sed 's/[^0-9]//g' )" = "$( echo $firmware_webs_state_info | sed 's/\(^[0-9]*\).*$/\1/g' )" ]; then
+					firmware_webs_state_info=$( echo $firmware_webs_state_info | sed 's/^[0-9]*[^0-9]*\([0-9].*$\)/\1/g' )
+				fi
 				firmware_version="$firmware_version.$firmware_webs_state_info"
 			fi
 			[ -z "$firmware_version" ] && firmware_version=unknown
